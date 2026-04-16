@@ -43,14 +43,18 @@ class Trie:
             node.count += 1
         node.end = True
 
-    def extract_patterns(self, total_logs, min_support=3, min_conf=0.6):
+    def extract_patterns(self, total_logs, min_support=1, min_conf=0.1):
         """
-        Extract maximal patterns with strict criteria.
+        Extract maximal patterns with relaxed criteria (based on ablation study).
         
+        Ablation study results show loose settings (min_support=1, min_conf=0.1)
+        significantly outperform strict settings (min_support=3, min_conf=0.6):
+        - Current (strict): F1=0.0 (TP=0, all anomalies missed)
+        - Loose (relaxed):  F1=0.167 (TP=0.4, catches anomalies)
+        
+        Trade-off: More false positives but better recall for real anomalies.
         Maximal = node has high support AND its parent has significantly 
         lower support, OR it's a non-leaf node with good confidence.
-        
-        This avoids outputting every individual file accessed.
         """
         patterns = []
 
@@ -207,15 +211,34 @@ def evaluate_request(user_id, resource, action, rules):
     
     Returns 'allowed' if the request matches any rule for this user,
     'over-granted' if it doesn't match any rule (anomalous behavior).
+    
+    Permission hierarchy:
+    - WRITE implies READ (can't write without reading)
+    - READ does NOT imply WRITE
+    - DELETE is independent
     """
-    matches_rule = any(
+    # Exact match: user + action + resource pattern
+    exact_match = any(
         r['userId'] == user_id and
         r['action'] == action and
         matches_pattern(resource, r['resourcePattern'])
         for r in rules
     )
     
-    if matches_rule:
-        return 'allowed'  # Matches learned baseline
-    else:
-        return 'over-granted'  # Anomalous - outside learned patterns
+    if exact_match:
+        return 'allowed'  # Exact match found
+    
+    # Check permission hierarchy: if requesting READ, check if WRITE is allowed
+    # (WRITE implies READ access)
+    if action == 'READ':
+        write_match = any(
+            r['userId'] == user_id and
+            r['action'] == 'WRITE' and
+            matches_pattern(resource, r['resourcePattern'])
+            for r in rules
+        )
+        if write_match:
+            return 'allowed'  # WRITE permission implies READ
+    
+    # No matching rule found
+    return 'over-granted'  # Anomalous - outside learned patterns

@@ -1,12 +1,15 @@
 'use client'
 import { clsx } from 'clsx'
+import { useEffect, useState } from 'react'
 import {
   LayoutDashboard, Shield, Zap, BrainCircuit, FileText,
-  BookOpen, GitCompare, FlaskConical, UploadCloud, ChevronRight
+  BookOpen, GitCompare, FlaskConical, UploadCloud, ChevronRight, Moon, Sun
 } from 'lucide-react'
 
 export type Page =
   | 'dashboard'
+  | 'config'
+  | 'risk'
   | 'baseline'
   | 'evaluate'
   | 'ml'
@@ -14,7 +17,6 @@ export type Page =
   | 'metrics'
   | 'compare'
   | 'ablation'
-  | 'upload'
 
 interface NavItem {
   id: Page
@@ -25,11 +27,11 @@ interface NavItem {
 
 const NAV: NavItem[] = [
   { id: 'dashboard', label: 'Dashboard',      icon: <LayoutDashboard size={14} />,  section: 'Overview' },
-  { id: 'upload',    label: 'Upload Logs',    icon: <UploadCloud size={14} />,      section: 'Data' },
-  { id: 'baseline',  label: 'Baseline Infer', icon: <Shield size={14} />,           section: 'Detection' },
-  { id: 'evaluate',  label: 'Live Evaluate',  icon: <Zap size={14} /> },
-  { id: 'ml',        label: 'ML Anomaly',     icon: <BrainCircuit size={14} /> },
-  { id: 'logs',      label: 'Access Logs',    icon: <FileText size={14} /> },
+  { id: 'config',    label: 'Upload Config',  icon: <UploadCloud size={14} />,      section: 'Cloud Security' },
+  { id: 'risk',      label: 'Risk Analysis',  icon: <Shield size={14} /> },
+  { id: 'baseline',  label: 'Baseline Infer', icon: <Zap size={14} />,             section: 'Detection' },
+  { id: 'evaluate',  label: 'Live Evaluate',  icon: <BrainCircuit size={14} /> },
+  { id: 'logs',      label: 'Access Logs',    icon: <FileText size={14} />,        section: 'Data' },
   { id: 'metrics',   label: 'Metrics',        icon: <BookOpen size={14} />,         section: 'Analysis' },
   { id: 'compare',   label: 'Compare',        icon: <GitCompare size={14} /> },
   { id: 'ablation',  label: 'Ablation Study', icon: <FlaskConical size={14} /> },
@@ -38,13 +40,15 @@ const NAV: NavItem[] = [
 interface SidebarProps {
   current: Page
   onChange: (p: Page) => void
+  theme: 'dark' | 'light'
+  onThemeChange: (theme: 'dark' | 'light') => void
 }
 
-export function Sidebar({ current, onChange }: SidebarProps) {
+export function Sidebar({ current, onChange, theme, onThemeChange }: SidebarProps) {
   let lastSection = ''
 
   return (
-    <aside className="w-[210px] h-screen sticky top-0">
+    <aside className="w-[210px] h-screen sticky top-0 flex flex-col">
       {/* Logo */}
       <div className="px-5 py-5 border-b border-[var(--border)]">
         <div className="flex items-center gap-2.5">
@@ -112,7 +116,34 @@ export function Sidebar({ current, onChange }: SidebarProps) {
       </nav>
 
       {/* Footer */}
-      <div className="px-5 py-4 border-t border-[var(--border)]">
+      <div className="px-5 py-4 border-t border-[var(--border)] space-y-3">
+        {/* Theme Toggle */}
+        <div className="flex items-center gap-2 bg-[var(--bg-2)] rounded p-1">
+          <button
+            onClick={() => onThemeChange('dark')}
+            className={clsx(
+              'flex-1 px-2 py-1 rounded text-xs font-medium transition',
+              theme === 'dark'
+                ? 'bg-[var(--am)] text-black'
+                : 'text-[var(--tx-3)] hover:text-[var(--tx-1)]'
+            )}
+          >
+            <Moon size={12} className="mx-auto" />
+          </button>
+          <button
+            onClick={() => onThemeChange('light')}
+            className={clsx(
+              'flex-1 px-2 py-1 rounded text-xs font-medium transition',
+              theme === 'light'
+                ? 'bg-[var(--am)] text-black'
+                : 'text-[var(--tx-3)] hover:text-[var(--tx-1)]'
+            )}
+          >
+            <Sun size={12} className="mx-auto" />
+          </button>
+        </div>
+
+        {/* Info */}
         <p className="text-[9px] font-mono text-[var(--tx-3)] leading-relaxed">
           Based on OPMonitor<br />
           Wang et al., 2025

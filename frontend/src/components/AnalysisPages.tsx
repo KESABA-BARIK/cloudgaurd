@@ -318,12 +318,13 @@ export function AblationPage() {
     finally { setLoading(false) }
   }
 
-  const variants = data ? Object.entries(data) : []
+  // Parse variants from nested results structure: data.results contains "current", "loose", "prefix" variants
+  const variants = data && data.results ? Object.entries(data.results) : []
   const colors = ['var(--am)', 'var(--blu)', 'var(--grn)', 'var(--orn)', 'var(--red)']
 
   const chartData = variants.length ? ['precision', 'recall', 'f1_score'].map(metric => ({
     metric: metric.replace('_', ' ').replace(/\b\w/g, l => l.toUpperCase()),
-    ...Object.fromEntries(variants.map(([name, v]) => [name, v.mean[metric as keyof Metrics] as number]))
+    ...Object.fromEntries(variants.map(([name, v]) => [name, v?.mean?.[metric as keyof Metrics] ?? 0]))
   })) : []
 
   return (
@@ -347,14 +348,14 @@ export function AblationPage() {
                 {v.description && <p className="text-xs text-[var(--tx-3)] leading-relaxed">{v.description}</p>}
                 <div className="flex flex-col gap-2 pt-2">
                   {[
-                    { k: 'Precision', val: v.mean.precision, std: v.std?.precision },
-                    { k: 'Recall',    val: v.mean.recall,    std: v.std?.recall    },
-                    { k: 'F1',        val: v.mean.f1_score,  std: v.std?.f1_score  },
+                    { k: 'Precision', val: v?.mean?.precision, std: v?.std?.precision },
+                    { k: 'Recall',    val: v?.mean?.recall,    std: v?.std?.recall    },
+                    { k: 'F1',        val: v?.mean?.f1_score,  std: v?.std?.f1_score  },
                   ].map(m => (
                     <div key={m.k} className="flex items-center justify-between">
                       <Mono muted>{m.k}</Mono>
                       <div className="text-right">
-                        <span className="font-mono text-xs" style={{ color: colors[i] }}>{(m.val * 100).toFixed(1)}%</span>
+                        <span className="font-mono text-xs" style={{ color: colors[i] }}>{(m.val ? m.val * 100 : 0).toFixed(1)}%</span>
                         {m.std !== undefined && <span className="font-mono text-[10px] text-[var(--tx-3)] ml-1">±{(m.std * 100).toFixed(1)}</span>}
                       </div>
                     </div>
