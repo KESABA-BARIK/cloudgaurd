@@ -32,9 +32,15 @@ class ConfigParser:
             return {'error': f'Invalid JSON: {str(e)}'}
     
     def parse_yaml_config(self, config_text: str) -> Dict[str, Any]:
-        """Parse YAML configuration (e.g., Kubernetes manifest)."""
+        """Parse YAML configuration (e.g., Kubernetes manifest).
+        Handles both single and multiple documents (separated by ---)."""
         try:
-            return yaml.safe_load(config_text)
+            # Use safe_load_all to handle multiple documents
+            documents = list(yaml.safe_load_all(config_text))
+            if not documents or documents[0] is None:
+                return {'error': 'Invalid YAML: empty or null document'}
+            # Return the first document (most common case)
+            return documents[0]
         except yaml.YAMLError as e:
             return {'error': f'Invalid YAML: {str(e)}'}
     

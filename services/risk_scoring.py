@@ -54,10 +54,10 @@ class RiskScoringEngine:
     PUBLIC_EXPOSURE_MULTIPLIER = 3.0
     
     def __init__(self):
-        self.risk_threshold_low = 3.0
-        self.risk_threshold_medium = 6.0
-        self.risk_threshold_high = 8.0
-        self.risk_threshold_critical = 9.0
+        self.risk_threshold_low = 2.5
+        self.risk_threshold_medium = 4.0
+        self.risk_threshold_high = 7.0
+        self.risk_threshold_critical = 8.5
     
     def calculate_sensitivity_score(self, text: str) -> float:
         """
@@ -200,11 +200,12 @@ class RiskScoringEngine:
         # Ensure anomaly score is in valid range
         anomaly_score = max(0.0, min(10.0, anomaly_score))
         
-        # Calculate composite risk score
-        risk_score = (anomaly_score * impact_factor * sensitivity_score) / 10.0
+        # Calculate composite risk score using weighted sum instead of product
+        # This ensures sensitivity_score and impact_factor still contribute when anomaly_score=0
+        risk_score = (anomaly_score * 0.4 + sensitivity_score * impact_factor * 0.6)
         
         # Normalize to 0-10 range
-        risk_score = min(10.0, risk_score)
+        risk_score = min(10.0, max(0.0, risk_score))
         
         # Determine risk level
         if risk_score >= self.risk_threshold_critical:

@@ -1,6 +1,6 @@
 'use client'
 import { useState, useEffect } from 'react'
-import { AlertTriangle, CheckCircle2, Lightbulb, TrendingUp } from 'lucide-react'
+import { AlertTriangle, CheckCircle2, Lightbulb, TrendingUp, Copy, Check } from 'lucide-react'
 
 interface Issue {
   id: string
@@ -23,6 +23,7 @@ interface RiskItem {
 export function RiskAnalysisPage() {
   const [risks, setRisks] = useState<RiskItem[]>([])
   const [selectedRisk, setSelectedRisk] = useState<RiskItem | null>(null)
+  const [copiedIssueId, setCopiedIssueId] = useState<string | null>(null)
 
   // Demo data
   useEffect(() => {
@@ -73,6 +74,15 @@ export function RiskAnalysisPage() {
     setRisks(demoRisks)
     if (demoRisks.length > 0) setSelectedRisk(demoRisks[0])
   }, [])
+
+  const handleApplyRemediation = (issueId: string, remediationText: string) => {
+    // Copy remediation to clipboard
+    navigator.clipboard.writeText(remediationText).then(() => {
+      setCopiedIssueId(issueId)
+      // Reset after 2 seconds
+      setTimeout(() => setCopiedIssueId(null), 2000)
+    })
+  }
 
   const getSeverityColor = (severity: string) => {
     switch (severity) {
@@ -175,8 +185,23 @@ export function RiskAnalysisPage() {
                       </div>
                     </div>
 
-                    <button className="w-full py-1.5 bg-[var(--am)]/10 hover:bg-[var(--am)]/20 text-[var(--am)] text-xs font-semibold rounded transition">
-                      Apply Remediation
+                    <button 
+                      onClick={() => handleApplyRemediation(issue.id, issue.remediation)}
+                      className={`w-full py-1.5 rounded transition text-xs font-semibold flex items-center justify-center gap-2 ${
+                        copiedIssueId === issue.id
+                          ? 'bg-[var(--grn)]/20 text-[var(--grn)]'
+                          : 'bg-[var(--am)]/10 hover:bg-[var(--am)]/20 text-[var(--am)]'
+                      }`}
+                    >
+                      {copiedIssueId === issue.id ? (
+                        <>
+                          <Check size={13} /> Copied to Clipboard
+                        </>
+                      ) : (
+                        <>
+                          <Copy size={13} /> Copy Remediation
+                        </>
+                      )}
                     </button>
                   </div>
                 )

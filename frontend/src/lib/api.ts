@@ -98,13 +98,22 @@ export interface BaselineComparison {
   trie:  { tp: number; fp: number; fn: number; tn: number; precision: number; recall: number; f1_score: number; rules_count: number; method: string }
 }
 
+export interface VariantResult {
+  mean: Metrics
+  std: Metrics
+  rules_count?: number
+  description?: string
+  variant: string
+  fold_results?: any[]
+}
+
 export interface AblationStudy {
-  [variant: string]: {
-    mean: Metrics
-    std: Metrics
-    rules_count: number
-    description: string
+  metric: string
+  results: {
+    [variant: string]: VariantResult
   }
+  variants_compared?: string[]
+  winner?: string
 }
 
 // ── API calls ─────────────────────────────────────────────────

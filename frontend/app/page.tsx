@@ -7,7 +7,7 @@ import { ConfigUploadPage } from '@/components/ConfigPage'
 import { RiskAnalysisPage } from '@/components/RiskAnalysisPage'
 import { UploadPage, BaselinePage, EvaluatePage, LogsPage } from '@/components/DataPages'
 import { MLPage, MetricsPage, ComparePage, AblationPage } from '@/components/AnalysisPages'
-import { Download } from 'lucide-react'
+import { Download, FileJson, BarChart3 } from 'lucide-react'
 
 const PAGE_LABELS: Record<Page, string> = {
   dashboard: 'Dashboard',
@@ -25,12 +25,27 @@ const PAGE_LABELS: Record<Page, string> = {
 export default function App() {
   const [page, setPage] = useState<Page>('dashboard')
   const [theme, setTheme] = useState<'dark' | 'light'>('dark')
+  const [showExportMenu, setShowExportMenu] = useState(false)
 
   // Load theme preference from localStorage
   useEffect(() => {
     const savedTheme = localStorage.getItem('theme') as 'dark' | 'light'
     if (savedTheme) setTheme(savedTheme)
   }, [])
+
+  // Close export menu when clicking outside
+  useEffect(() => {
+    const handleClickOutside = (e: MouseEvent) => {
+      const target = e.target as HTMLElement
+      if (!target.closest('[class*="relative"]')) {
+        setShowExportMenu(false)
+      }
+    }
+    if (showExportMenu) {
+      document.addEventListener('click', handleClickOutside)
+      return () => document.removeEventListener('click', handleClickOutside)
+    }
+  }, [showExportMenu])
 
   // Save theme preference
   const handleThemeChange = (newTheme: 'dark' | 'light') => {
@@ -55,54 +70,102 @@ export default function App() {
     }
   }
 
-  const handleExport = async () => {
+  const handleExport = async (format: 'json' | 'csv' = 'json') => {
     try {
-      let exportData: any = {
-        title: `CloudGuard ${PAGE_LABELS[page]} Report`,
-        timestamp: new Date().toISOString(),
-        page: page,
-        theme: theme,
-        note: 'Export from CloudGuard AI Security Analysis System. Extended from OPMonitor (Wang et al., 2025)'
-      }
+      setShowExportMenu(false)
+      
+      let fileContent = ''
+      let fileName = `cloudguard-${page}-report-${Date.now()}`
+      let mimeType = format === 'csv' ? 'text/csv' : 'application/json'
 
       // Fetch page-specific data from backend
       if (page === 'config') {
-        const res = await fetch('http://localhost:5000/api/config/export/summary')
+        // Config page uses export/summary endpoint that returns raw CSV or JSON
+        const res = await fetch('http://localhost:5000/api/config/export/summary', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ format, include_details: true })
+        })
         if (res.ok) {
-          const data = await res.json()
-          exportData.data = data
+          fileContent = await res.text()
+          fileName += format === 'csv' ? '.csv' : '.json'
         }
       } else if (page === 'baseline') {
-        const res = await fetch('http://localhost:5000/api/baseline/infer')
+        // Baseline returns JSON, optionally output as CSV if requested
+        const res = await fetch('http://localhost:5000/api/baseline/infer', { method: 'POST' })
         if (res.ok) {
           const data = await res.json()
-          exportData.data = data
+          fileContent = format === 'json' 
+            ? JSON.stringify({ title: PAGE_LABELS[page], timestamp: new Date().toISOString(), data }, null, 2)
+            : convertJsonToCsv(data, 'baseline')
+          fileName += format === 'csv' ? '.csv' : '.json'
         }
       } else if (page === 'evaluate') {
         const res = await fetch('http://localhost:5000/api/evaluate/metrics')
         if (res.ok) {
           const data = await res.json()
-          exportData.data = data
+          fileContent = format === 'json'
+            ? JSON.stringify({ title: PAGE_LABELS[page], timestamp: new Date().toISOString(), data }, null, 2)
+            : convertJsonToCsv(data, 'metrics')
+          fileName += format === 'csv' ? '.csv' : '.json'
         }
       } else if (page === 'ablation') {
-        const res = await fetch('http://localhost:5000/api/ablation/study')
+        const res = await fetch('http://localhost:5000/api/evaluate/ablation')
         if (res.ok) {
           const data = await res.json()
-          exportData.data = data
+          fileContent = format === 'json'
+            ? JSON.stringify({ title: PAGE_LABELS[page], timestamp: new Date().toISOString(), data }, null, 2)
+            : convertJsonToCsv(data, 'ablation')
+          fileName += format === 'csv' ? '.csv' : '.json'
         }
+      } else {
+        // Dashboard and other pages - metadata only
+        fileContent = JSON.stringify({
+          title: `CloudGuard ${PAGE_LABELS[page]} Report`,
+          timestamp: new Date().toISOString(),
+          page: page,
+          theme: theme,
+          note: 'Export from CloudGuard AI Security Analysis System. Extended from OPMonitor (Wang et al., 2025)'
+        }, null, 2)
+        fileName += '.json'
       }
 
-      const dataStr = JSON.stringify(exportData, null, 2)
-      const dataBlob = new Blob([dataStr], { type: 'application/json' })
-      const url = URL.createObjectURL(dataBlob)
+      // Download file
+      const blob = new Blob([fileContent], { type: mimeType })
+      const url = URL.createObjectURL(blob)
       const link = document.createElement('a')
       link.href = url
-      link.download = `cloudguard-${page}-report-${Date.now()}.json`
+      link.download = fileName
       link.click()
       URL.revokeObjectURL(url)
     } catch (error) {
       console.error('Export failed:', error)
     }
+  }
+
+  // Helper to convert JSON to CSV format
+  const convertJsonToCsv = (data: any, type: string): string => {
+    if (type === 'baseline' && data.coarse_rules) {
+      const rules = data.coarse_rules || []
+      if (rules.length === 0) return 'No rules generated'
+      const headers = Object.keys(rules[0]).join(',')
+      const rows = rules.map((r: any) => Object.values(r).map(v => `"${v}"`).join(','))
+      return [headers, ...rows].join('\n')
+    } else if (type === 'metrics' && typeof data === 'object') {
+      const headers = Object.keys(data).join(',')
+      const values = Object.values(data).join(',')
+      return `${headers}\n${values}`
+    } else if (type === 'ablation' && data.results) {
+      const rows = Object.entries(data.results).map(([variant, result]: any) => [
+        variant,
+        result.mean?.precision || 0,
+        result.mean?.recall || 0,
+        result.mean?.f1_score || 0
+      ])
+      const headers = 'Variant,Precision,Recall,F1 Score'
+      return [headers, ...rows.map((r: any) => r.join(','))].join('\n')
+    }
+    return JSON.stringify(data)
   }
 
   return (
@@ -125,13 +188,33 @@ export default function App() {
           </div>
 
           {/* Actions */}
-          <div className="flex items-center gap-3">
-            <button
-              onClick={handleExport}
-              className="px-3 py-2 text-xs font-medium rounded bg-[var(--am)]/10 hover:bg-[var(--am)]/20 text-[var(--am)] flex items-center gap-2 transition"
-            >
-              <Download size={14} /> Export
-            </button>
+          <div className="flex items-center gap-3 relative">
+            {/* Export button with dropdown */}
+            <div className="relative">
+              <button
+                onClick={() => setShowExportMenu(!showExportMenu)}
+                className="px-3 py-2 text-xs font-medium rounded bg-[var(--am)]/10 hover:bg-[var(--am)]/20 text-[var(--am)] flex items-center gap-2 transition"
+              >
+                <Download size={14} /> Export
+              </button>
+              
+              {showExportMenu && (
+                <div className="absolute right-0 mt-1 w-44 rounded border border-[var(--border)] bg-[var(--bg-2)] shadow-lg z-50">
+                  <button
+                    onClick={() => handleExport('json')}
+                    className="w-full px-4 py-2 text-xs text-left hover:bg-[var(--bg-3)] transition border-b border-[var(--border)] last:border-b-0 flex items-center gap-2 text-[var(--tx-1)]"
+                  >
+                    <FileJson size={14} className="text-[var(--am)]" /> Export as JSON
+                  </button>
+                  <button
+                    onClick={() => handleExport('csv')}
+                    className="w-full px-4 py-2 text-xs text-left hover:bg-[var(--bg-3)] transition border-b border-[var(--border)] last:border-b-0 flex items-center gap-2 text-[var(--tx-1)]"
+                  >
+                    <BarChart3 size={14} className="text-[var(--am)]" /> Export as CSV
+                  </button>
+                </div>
+              )}
+            </div>
 
             {/* Breadcrumb */}
             <div className="flex items-center gap-1.5 text-[10px] font-mono text-[var(--tx-3)]">

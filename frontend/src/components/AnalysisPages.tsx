@@ -2,7 +2,7 @@
 import { useState } from 'react'
 import { BrainCircuit, Play, RefreshCw } from 'lucide-react'
 import { RadarChart, Radar, PolarGrid, PolarAngleAxis, ResponsiveContainer, BarChart, Bar, XAxis, YAxis, Tooltip, Cell } from 'recharts'
-import { api, MLResult, Metrics, CrossValidation, BaselineComparison, AblationStudy } from '@/lib/api'
+import { api, MLResult, Metrics, CrossValidation, BaselineComparison, AblationStudy, VariantResult } from '@/lib/api'
 import { SAMPLE_ML_CONFIGS } from '@/lib/sampleData'
 import { Card, Btn, Tag, Mono, EmptyState, ScoreBar, ConfusionMatrix, SectionHeader, StatCard } from '@/components/ui'
 
@@ -319,12 +319,12 @@ export function AblationPage() {
   }
 
   // Parse variants from nested results structure: data.results contains "current", "loose", "prefix" variants
-  const variants = data && data.results ? Object.entries(data.results) : []
+  const variants = data && data.results ? Object.entries(data.results as Record<string, VariantResult>) : []
   const colors = ['var(--am)', 'var(--blu)', 'var(--grn)', 'var(--orn)', 'var(--red)']
 
   const chartData = variants.length ? ['precision', 'recall', 'f1_score'].map(metric => ({
     metric: metric.replace('_', ' ').replace(/\b\w/g, l => l.toUpperCase()),
-    ...Object.fromEntries(variants.map(([name, v]) => [name, v?.mean?.[metric as keyof Metrics] ?? 0]))
+    ...Object.fromEntries(variants.map(([name, v]) => [name, (v as VariantResult)?.mean?.[metric as keyof Metrics] ?? 0]))
   })) : []
 
   return (
@@ -339,18 +339,20 @@ export function AblationPage() {
       {variants.length > 0 && (
         <>
           <div className="grid gap-4" style={{ gridTemplateColumns: `repeat(${Math.min(variants.length, 3)}, 1fr)` }}>
-            {variants.map(([name, v], i) => (
+            {variants.map(([name, v], i) => {
+              const variant = v as VariantResult
+              return (
               <Card key={name} className="p-5 flex flex-col gap-3">
                 <div className="flex items-center gap-2">
                   <div className="w-2 h-6 rounded-full" style={{ background: colors[i] }} />
                   <p className="text-sm font-semibold text-[var(--tx-1)]">{name}</p>
                 </div>
-                {v.description && <p className="text-xs text-[var(--tx-3)] leading-relaxed">{v.description}</p>}
+                {variant.description && <p className="text-xs text-[var(--tx-3)] leading-relaxed">{variant.description}</p>}
                 <div className="flex flex-col gap-2 pt-2">
                   {[
-                    { k: 'Precision', val: v?.mean?.precision, std: v?.std?.precision },
-                    { k: 'Recall',    val: v?.mean?.recall,    std: v?.std?.recall    },
-                    { k: 'F1',        val: v?.mean?.f1_score,  std: v?.std?.f1_score  },
+                    { k: 'Precision', val: variant?.mean?.precision, std: variant?.std?.precision },
+                    { k: 'Recall',    val: variant?.mean?.recall,    std: variant?.std?.recall    },
+                    { k: 'F1',        val: variant?.mean?.f1_score,  std: variant?.std?.f1_score  },
                   ].map(m => (
                     <div key={m.k} className="flex items-center justify-between">
                       <Mono muted>{m.k}</Mono>
@@ -362,10 +364,11 @@ export function AblationPage() {
                   ))}
                 </div>
                 <div className="pt-2 border-t border-[var(--border)]">
-                  <Mono muted>Rules: {v.rules_count ?? '—'}</Mono>
+                  <Mono muted>Rules: {variant.rules_count ?? '—'}</Mono>
                 </div>
               </Card>
-            ))}
+            )
+            })}
           </div>
 
           {chartData.length > 0 && (
