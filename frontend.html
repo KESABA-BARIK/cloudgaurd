@@ -1,0 +1,1021 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>CloudGuard — AI-Powered Cloud Security</title>
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;600&family=Syne:wght@400;600;700;800&display=swap" rel="stylesheet"/>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+:root{
+  --bg:#08090d;--surface:#0f1117;--card:#141620;--border:#1e2235;
+  --accent:#4f8ef7;--accent2:#7c3aed;--accent3:#06b6d4;--accent4:#10b981;
+  --danger:#ef4444;--warn:#f59e0b;--ok:#10b981;
+  --text:#e2e8f0;--muted:#64748b;--subtle:#1e2235;
+  --font-mono:'JetBrains Mono',monospace;--font:'Syne',sans-serif;
+}
+html{scroll-behavior:smooth}
+body{background:var(--bg);color:var(--text);font-family:var(--font);min-height:100vh;overflow-x:hidden}
+
+/* ── SCROLLBAR ── */
+::-webkit-scrollbar{width:6px;height:6px}
+::-webkit-scrollbar-track{background:var(--bg)}
+::-webkit-scrollbar-thumb{background:var(--border);border-radius:3px}
+
+/* ── GRID NOISE BACKGROUND ── */
+body::before{content:'';position:fixed;inset:0;background:
+  radial-gradient(ellipse 80% 50% at 20% 10%,rgba(79,142,247,.07) 0,transparent 60%),
+  radial-gradient(ellipse 60% 40% at 80% 80%,rgba(124,58,237,.06) 0,transparent 60%);
+  pointer-events:none;z-index:0}
+
+/* ── SIDEBAR ── */
+.sidebar{position:fixed;left:0;top:0;width:220px;height:100vh;background:var(--surface);
+  border-right:1px solid var(--border);display:flex;flex-direction:column;z-index:100;
+  padding:0}
+.logo{padding:20px 18px;border-bottom:1px solid var(--border);display:flex;align-items:center;gap:10px}
+.logo-icon{width:32px;height:32px;background:linear-gradient(135deg,var(--accent),var(--accent2));
+  border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:16px}
+.logo-text{font-size:16px;font-weight:800;letter-spacing:-.5px}
+.logo-sub{font-size:9px;color:var(--muted);font-family:var(--font-mono);letter-spacing:2px;margin-top:1px}
+
+nav{flex:1;padding:12px 0;overflow-y:auto}
+.nav-section{padding:6px 18px 2px;font-size:9px;color:var(--muted);letter-spacing:2px;font-family:var(--font-mono);margin-top:8px}
+.nav-item{display:flex;align-items:center;gap:10px;padding:9px 18px;cursor:pointer;
+  font-size:13px;font-weight:600;color:var(--muted);transition:all .15s;border-left:2px solid transparent;
+  position:relative}
+.nav-item:hover{color:var(--text);background:rgba(79,142,247,.06)}
+.nav-item.active{color:var(--accent);border-left-color:var(--accent);background:rgba(79,142,247,.08)}
+.nav-item .badge{margin-left:auto;background:var(--danger);color:#fff;font-size:9px;
+  padding:1px 5px;border-radius:9px;font-family:var(--font-mono)}
+.nav-icon{width:16px;text-align:center;font-size:14px}
+
+.sidebar-footer{padding:14px 18px;border-top:1px solid var(--border)}
+.status-pill{display:flex;align-items:center;gap:6px;font-size:11px;color:var(--muted)}
+.dot{width:7px;height:7px;border-radius:50%;background:var(--ok);box-shadow:0 0 6px var(--ok);animation:pulse 2s infinite}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:.5}}
+
+/* ── MAIN ── */
+.main{margin-left:220px;min-height:100vh;position:relative;z-index:1}
+.topbar{background:var(--surface);border-bottom:1px solid var(--border);padding:0 28px;
+  height:56px;display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;z-index:50}
+.page-title{font-size:18px;font-weight:800;display:flex;align-items:center;gap:8px}
+.page-title span{font-size:11px;font-family:var(--font-mono);color:var(--muted);font-weight:400;margin-left:4px}
+.topbar-right{display:flex;align-items:center;gap:12px}
+.btn{padding:7px 14px;border-radius:6px;font-size:12px;font-weight:700;cursor:pointer;
+  border:none;font-family:var(--font);transition:all .15s;display:flex;align-items:center;gap:6px}
+.btn-primary{background:var(--accent);color:#fff}
+.btn-primary:hover{background:#3b7de8;transform:translateY(-1px)}
+.btn-outline{background:transparent;color:var(--muted);border:1px solid var(--border)}
+.btn-outline:hover{color:var(--text);border-color:var(--accent)}
+.btn-danger{background:rgba(239,68,68,.15);color:var(--danger);border:1px solid rgba(239,68,68,.2)}
+.btn-danger:hover{background:rgba(239,68,68,.25)}
+.btn-success{background:rgba(16,185,129,.15);color:var(--ok);border:1px solid rgba(16,185,129,.2)}
+.btn-success:hover{background:rgba(16,185,129,.25)}
+
+.content{padding:24px 28px}
+
+/* ── PAGES ── */
+.page{display:none}
+.page.active{display:block}
+
+/* ── STAT CARDS ── */
+.stats-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:16px;margin-bottom:24px}
+.stat-card{background:var(--card);border:1px solid var(--border);border-radius:12px;padding:20px;
+  position:relative;overflow:hidden;transition:border-color .2s}
+.stat-card:hover{border-color:rgba(79,142,247,.3)}
+.stat-card::before{content:'';position:absolute;top:0;right:0;width:60px;height:60px;
+  border-radius:0 12px 0 60px;opacity:.15}
+.stat-card.blue::before{background:var(--accent)}
+.stat-card.purple::before{background:var(--accent2)}
+.stat-card.green::before{background:var(--ok)}
+.stat-card.red::before{background:var(--danger)}
+.stat-label{font-size:11px;color:var(--muted);font-family:var(--font-mono);letter-spacing:1px;margin-bottom:8px}
+.stat-value{font-size:32px;font-weight:800;line-height:1;margin-bottom:6px}
+.stat-value.blue{color:var(--accent)}
+.stat-value.purple{color:var(--accent2)}
+.stat-value.green{color:var(--ok)}
+.stat-value.red{color:var(--danger)}
+.stat-sub{font-size:11px;color:var(--muted)}
+
+/* ── PANEL GRID ── */
+.panel-grid{display:grid;grid-template-columns:2fr 1fr;gap:16px;margin-bottom:20px}
+.panel-grid-3{display:grid;grid-template-columns:repeat(3,1fr);gap:16px;margin-bottom:20px}
+.panel{background:var(--card);border:1px solid var(--border);border-radius:12px;overflow:hidden}
+.panel-header{padding:16px 20px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between}
+.panel-title{font-size:13px;font-weight:700}
+.panel-body{padding:20px}
+
+/* ── RISK BADGE ── */
+.badge-risk{display:inline-flex;align-items:center;gap:4px;padding:2px 8px;border-radius:99px;
+  font-size:10px;font-weight:700;font-family:var(--font-mono);letter-spacing:.5px}
+.badge-critical{background:rgba(239,68,68,.15);color:#f87171;border:1px solid rgba(239,68,68,.2)}
+.badge-high{background:rgba(245,158,11,.15);color:#fbbf24;border:1px solid rgba(245,158,11,.2)}
+.badge-medium{background:rgba(6,182,212,.15);color:#22d3ee;border:1px solid rgba(6,182,212,.2)}
+.badge-low{background:rgba(16,185,129,.15);color:#34d399;border:1px solid rgba(16,185,129,.2)}
+.badge-over{background:rgba(239,68,68,.15);color:#f87171;border:1px solid rgba(239,68,68,.2)}
+.badge-normal{background:rgba(16,185,129,.15);color:#34d399;border:1px solid rgba(16,185,129,.2)}
+.badge-allowed{background:rgba(16,185,129,.15);color:#34d399;border:1px solid rgba(16,185,129,.2)}
+
+/* ── TABLE ── */
+.table-wrap{overflow-x:auto}
+table{width:100%;border-collapse:collapse;font-size:12px}
+thead th{padding:10px 14px;text-align:left;font-size:10px;font-family:var(--font-mono);
+  letter-spacing:1px;color:var(--muted);border-bottom:1px solid var(--border);white-space:nowrap}
+tbody tr{border-bottom:1px solid rgba(30,34,53,.6);transition:background .1s;cursor:default}
+tbody tr:hover{background:rgba(79,142,247,.04)}
+tbody td{padding:11px 14px;color:var(--text)}
+.mono{font-family:var(--font-mono);font-size:11px}
+.truncate{max-width:240px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+
+/* ── CHART (pure CSS) ── */
+.bar-chart{display:flex;flex-direction:column;gap:10px}
+.bar-row{display:flex;align-items:center;gap:10px;font-size:11px}
+.bar-label{width:70px;text-align:right;color:var(--muted);font-family:var(--font-mono);font-size:10px}
+.bar-track{flex:1;height:8px;background:var(--subtle);border-radius:4px;overflow:hidden}
+.bar-fill{height:100%;border-radius:4px;transition:width 1s cubic-bezier(.4,0,.2,1)}
+.bar-count{width:32px;text-align:right;color:var(--text);font-family:var(--font-mono);font-size:10px}
+
+/* ── TREND SPARKLINE (SVG-based via JS) ── */
+.trend-wrap{height:80px;position:relative}
+
+/* ── DONUT CHART ── */
+.donut-wrap{display:flex;align-items:center;gap:20px}
+.donut-svg{flex-shrink:0}
+.donut-legend{display:flex;flex-direction:column;gap:7px}
+.legend-item{display:flex;align-items:center;gap:7px;font-size:11px}
+.legend-dot{width:8px;height:8px;border-radius:2px}
+
+/* ── FORM ── */
+.form-group{margin-bottom:14px}
+.form-label{font-size:11px;color:var(--muted);font-family:var(--font-mono);margin-bottom:5px;display:block}
+.form-input{width:100%;background:var(--surface);border:1px solid var(--border);border-radius:7px;
+  padding:9px 12px;color:var(--text);font-size:13px;font-family:var(--font-mono);outline:none;transition:border-color .15s}
+.form-input:focus{border-color:var(--accent)}
+.form-select{width:100%;background:var(--surface);border:1px solid var(--border);border-radius:7px;
+  padding:9px 12px;color:var(--text);font-size:13px;outline:none;font-family:var(--font);cursor:pointer}
+.form-select:focus{border-color:var(--accent)}
+
+/* ── RESULT BOX ── */
+.result-box{background:var(--surface);border:1px solid var(--border);border-radius:8px;
+  padding:14px 16px;margin-top:12px;display:none}
+.result-box.show{display:block}
+.result-box.danger{border-color:rgba(239,68,68,.3);background:rgba(239,68,68,.04)}
+.result-box.success{border-color:rgba(16,185,129,.3);background:rgba(16,185,129,.04)}
+.result-label{font-size:9px;font-family:var(--font-mono);color:var(--muted);letter-spacing:2px;margin-bottom:4px}
+.result-value{font-size:20px;font-weight:800}
+.result-value.danger{color:var(--danger)}
+.result-value.success{color:var(--ok)}
+.result-detail{font-size:11px;color:var(--muted);margin-top:6px;font-family:var(--font-mono)}
+
+/* ── ALERT TOAST ── */
+.toast-container{position:fixed;top:70px;right:20px;z-index:999;display:flex;flex-direction:column;gap:8px}
+.toast{background:var(--card);border:1px solid var(--border);border-radius:8px;padding:12px 16px;
+  max-width:320px;font-size:12px;display:flex;align-items:start;gap:10px;
+  animation:slideIn .3s ease;box-shadow:0 8px 24px rgba(0,0,0,.4)}
+@keyframes slideIn{from{opacity:0;transform:translateX(30px)}to{opacity:1;transform:translateX(0)}}
+.toast.danger{border-left:3px solid var(--danger)}
+.toast.success{border-left:3px solid var(--ok)}
+.toast.warn{border-left:3px solid var(--warn)}
+.toast-icon{font-size:16px;margin-top:1px}
+.toast-title{font-weight:700;margin-bottom:2px}
+.toast-msg{color:var(--muted);line-height:1.4}
+
+/* ── LOADING SPINNER ── */
+.spinner{display:inline-block;width:14px;height:14px;border:2px solid rgba(79,142,247,.2);
+  border-top-color:var(--accent);border-radius:50%;animation:spin .7s linear infinite}
+@keyframes spin{to{transform:rotate(360deg)}}
+
+/* ── ML SCORE BAR ── */
+.score-cell{display:flex;align-items:center;gap:8px}
+.score-bar{flex:1;max-width:80px;height:5px;background:var(--subtle);border-radius:3px;overflow:hidden}
+.score-fill{height:100%;border-radius:3px}
+.score-num{font-family:var(--font-mono);font-size:10px;width:30px}
+
+/* ── RULE CARD ── */
+.rule-card{background:var(--surface);border:1px solid var(--border);border-radius:8px;
+  padding:12px 14px;margin-bottom:8px}
+.rule-head{display:flex;align-items:center;gap:8px;margin-bottom:6px}
+.rule-user{font-family:var(--font-mono);font-size:11px;font-weight:600;color:var(--accent)}
+.rule-action{font-family:var(--font-mono);font-size:10px;color:var(--ok);background:rgba(16,185,129,.1);
+  padding:1px 6px;border-radius:4px;border:1px solid rgba(16,185,129,.2)}
+.rule-pattern{font-family:var(--font-mono);font-size:11px;color:var(--text)}
+
+/* ── PHASE FLOW ── */
+.phase-flow{display:flex;align-items:center;gap:0;margin-bottom:20px}
+.phase-box{background:var(--surface);border:1px solid var(--border);border-radius:8px;
+  padding:10px 16px;flex:1;text-align:center}
+.phase-box.active{border-color:var(--accent);background:rgba(79,142,247,.07)}
+.phase-num{font-size:9px;font-family:var(--font-mono);color:var(--muted);margin-bottom:3px}
+.phase-name{font-size:11px;font-weight:700}
+.phase-arrow{color:var(--muted);padding:0 8px;font-size:18px}
+
+/* ── ABT TREE VIZ ── */
+.abt-container{font-family:var(--font-mono);font-size:11px}
+.abt-node{display:flex;flex-direction:column;align-items:flex-start;padding-left:16px;
+  border-left:1px solid var(--border);margin-left:8px}
+.abt-node:last-child{border-left-color:transparent}
+.abt-item{display:flex;align-items:center;gap:6px;padding:3px 0;cursor:default}
+.abt-item:hover .abt-label{color:var(--accent)}
+.abt-connector{color:var(--border);margin-right:2px}
+.abt-label{color:var(--text)}
+.abt-leaf-t{color:var(--ok);background:rgba(16,185,129,.1);padding:1px 5px;border-radius:3px;font-size:9px}
+.abt-leaf-f{color:var(--danger);background:rgba(239,68,68,.1);padding:1px 5px;border-radius:3px;font-size:9px}
+
+/* ── RESPONSIVE ── */
+@media(max-width:1100px){.stats-grid{grid-template-columns:repeat(2,1fr)}.panel-grid{grid-template-columns:1fr}}
+
+/* ── EMPTY STATE ── */
+.empty{text-align:center;padding:40px;color:var(--muted)}
+.empty-icon{font-size:36px;margin-bottom:10px}
+.empty-text{font-size:13px}
+</style>
+</head>
+<body>
+
+<!-- SIDEBAR -->
+<aside class="sidebar">
+  <div class="logo">
+    <div class="logo-icon">🛡</div>
+    <div>
+      <div class="logo-text">CloudGuard</div>
+      <div class="logo-sub">AI SECURITY</div>
+    </div>
+  </div>
+  <nav>
+    <div class="nav-section">OVERVIEW</div>
+    <div class="nav-item active" onclick="showPage('dashboard')">
+      <span class="nav-icon">📊</span>Dashboard
+    </div>
+    <div class="nav-section">DETECTION</div>
+    <div class="nav-item" onclick="showPage('opmonitor')">
+      <span class="nav-icon">🔍</span>OPMonitor
+    </div>
+    <div class="nav-item" onclick="showPage('evaluate')">
+      <span class="nav-icon">⚡</span>Live Evaluate
+    </div>
+    <div class="nav-item" onclick="showPage('anomaly')">
+      <span class="nav-icon">🤖</span>ML Anomaly<span class="badge" id="mlBadge">—</span>
+    </div>
+    <div class="nav-section">SCANNING</div>
+    <div class="nav-item" onclick="showPage('iam')">
+      <span class="nav-icon">🔑</span>IAM Policies<span class="badge" id="iamBadge">—</span>
+    </div>
+    <div class="nav-item" onclick="showPage('network')">
+      <span class="nav-icon">🌐</span>Network Rules<span class="badge" id="netBadge">—</span>
+    </div>
+    <div class="nav-item" onclick="showPage('k8s')">
+      <span class="nav-icon">☸</span>Kubernetes<span class="badge" id="k8sBadge">—</span>
+    </div>
+    <div class="nav-section">MONITORING</div>
+    <div class="nav-item" onclick="showPage('logs')">
+      <span class="nav-icon">📋</span>Access Logs
+    </div>
+    <div class="nav-item" onclick="showPage('baseline')">
+      <span class="nav-icon">📐</span>Baseline Rules
+    </div>
+  </nav>
+  <div class="sidebar-footer">
+    <div class="status-pill"><div class="dot"></div>Backend Connected</div>
+  </div>
+</aside>
+
+<!-- MAIN -->
+<div class="main">
+  <!-- TOPBAR -->
+  <div class="topbar">
+    <div class="page-title" id="pageTitle">📊 Dashboard <span>OVERVIEW</span></div>
+    <div class="topbar-right">
+      <button class="btn btn-outline" onclick="refreshAll()">↻ Refresh</button>
+      <button class="btn btn-primary" onclick="runFullScan()">⚡ Full Scan</button>
+    </div>
+  </div>
+
+  <!-- ═══════════════════════ DASHBOARD ═══════════════════════ -->
+  <div class="content">
+  <div class="page active" id="page-dashboard">
+    <div class="stats-grid" id="statsGrid">
+      <div class="stat-card blue"><div class="stat-label">BASELINE RULES</div><div class="stat-value blue" id="s-rules">—</div><div class="stat-sub">Inferred from logs</div></div>
+      <div class="stat-card red"><div class="stat-label">OVER-GRANTED</div><div class="stat-value red" id="s-og">—</div><div class="stat-sub">Detected this session</div></div>
+      <div class="stat-card green"><div class="stat-label">DETECTION RATE</div><div class="stat-value green" id="s-dr">—</div><div class="stat-sub">vs baseline methods</div></div>
+      <div class="stat-card purple"><div class="stat-label">AVG EVAL LATENCY</div><div class="stat-value purple" id="s-lat">—</div><div class="stat-sub">ABT microseconds</div></div>
+    </div>
+
+    <div class="panel-grid">
+      <!-- Risk Distribution -->
+      <div class="panel">
+        <div class="panel-header">
+          <div class="panel-title">📈 Risk Distribution Trend (7 Days)</div>
+        </div>
+        <div class="panel-body">
+          <div class="trend-wrap">
+            <svg id="trendSvg" width="100%" height="80" style="overflow:visible"></svg>
+          </div>
+        </div>
+      </div>
+      <!-- Donut -->
+      <div class="panel">
+        <div class="panel-header"><div class="panel-title">🎯 Risk Levels</div></div>
+        <div class="panel-body">
+          <div class="donut-wrap">
+            <svg class="donut-svg" width="100" height="100" viewBox="0 0 100 100" id="donutSvg"></svg>
+            <div class="donut-legend" id="donutLegend"></div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="panel-grid-3">
+      <div class="panel">
+        <div class="panel-header"><div class="panel-title">🔑 IAM Issues</div><a onclick="showPage('iam')" style="cursor:pointer;font-size:11px;color:var(--accent)">View All →</a></div>
+        <div class="panel-body"><div class="bar-chart" id="iamBar"></div></div>
+      </div>
+      <div class="panel">
+        <div class="panel-header"><div class="panel-title">🌐 Network Issues</div><a onclick="showPage('network')" style="cursor:pointer;font-size:11px;color:var(--accent)">View All →</a></div>
+        <div class="panel-body"><div class="bar-chart" id="netBar"></div></div>
+      </div>
+      <div class="panel">
+        <div class="panel-header"><div class="panel-title">☸ K8s Issues</div><a onclick="showPage('k8s')" style="cursor:pointer;font-size:11px;color:var(--accent)">View All →</a></div>
+        <div class="panel-body"><div class="bar-chart" id="k8sBar"></div></div>
+      </div>
+    </div>
+
+    <!-- Recent alerts -->
+    <div class="panel">
+      <div class="panel-header"><div class="panel-title">🚨 Recent Alerts</div></div>
+      <div class="panel-body" id="recentAlerts"></div>
+    </div>
+  </div>
+
+  <!-- ═══════════════════════ OPMONITOR ═══════════════════════ -->
+  <div class="page" id="page-opmonitor">
+    <div class="phase-flow">
+      <div class="phase-box active"><div class="phase-num">PHASE 1</div><div class="phase-name">Coarse Mining</div></div>
+      <div class="phase-arrow">→</div>
+      <div class="phase-box active"><div class="phase-num">PHASE 2</div><div class="phase-name">Rule Refinement</div></div>
+      <div class="phase-arrow">→</div>
+      <div class="phase-box active"><div class="phase-num">OUTPUT</div><div class="phase-name">ABT Structure</div></div>
+      <div class="phase-arrow">→</div>
+      <div class="phase-box active"><div class="phase-num">RUNTIME</div><div class="phase-name">Real-Time Monitor</div></div>
+    </div>
+
+    <div class="panel-grid">
+      <div class="panel">
+        <div class="panel-header">
+          <div class="panel-title">🔍 Baseline Inference Engine</div>
+          <button class="btn btn-primary" onclick="runBaselineInference()">▶ Run Inference</button>
+        </div>
+        <div class="panel-body">
+          <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px;margin-bottom:16px">
+            <div style="background:var(--surface);border:1px solid var(--border);border-radius:8px;padding:12px;text-align:center">
+              <div style="font-size:9px;color:var(--muted);font-family:var(--font-mono);margin-bottom:4px">LOGS PROCESSED</div>
+              <div style="font-size:24px;font-weight:800;color:var(--accent)" id="opLogs">—</div>
+            </div>
+            <div style="background:var(--surface);border:1px solid var(--border);border-radius:8px;padding:12px;text-align:center">
+              <div style="font-size:9px;color:var(--muted);font-family:var(--font-mono);margin-bottom:4px">COARSE RULES</div>
+              <div style="font-size:24px;font-weight:800;color:var(--warn)" id="opCoarse">—</div>
+            </div>
+            <div style="background:var(--surface);border:1px solid var(--border);border-radius:8px;padding:12px;text-align:center">
+              <div style="font-size:9px;color:var(--muted);font-family:var(--font-mono);margin-bottom:4px">REFINED RULES</div>
+              <div style="font-size:24px;font-weight:800;color:var(--ok)" id="opRefined">—</div>
+            </div>
+          </div>
+          <div style="background:var(--surface);border:1px solid var(--border);border-radius:8px;padding:10px 14px;margin-bottom:12px;display:flex;align-items:center;gap:8px">
+            <span style="font-size:9px;color:var(--muted);font-family:var(--font-mono)">INFERENCE TIME</span>
+            <span style="font-family:var(--font-mono);font-size:13px;font-weight:700;color:var(--accent3)" id="opTime">—</span>
+            <span style="font-size:9px;color:var(--muted);margin-left:auto">Target: &lt;30s ✓</span>
+          </div>
+          <div id="opRulesOut"></div>
+        </div>
+      </div>
+
+      <!-- ABT Visual -->
+      <div class="panel">
+        <div class="panel-header"><div class="panel-title">🌲 Abstract Baseline Tree</div></div>
+        <div class="panel-body">
+          <div class="abt-container" id="abtViz">
+            <div style="color:var(--muted);font-size:11px">Run inference to see ABT structure</div>
+          </div>
+          <div style="margin-top:16px;padding:12px;background:var(--surface);border:1px solid var(--border);border-radius:8px;font-size:10px;color:var(--muted);font-family:var(--font-mono);line-height:1.8">
+            <div><span style="color:var(--ok)">TRUE</span> = request allowed by baseline</div>
+            <div><span style="color:var(--danger)">FALSE</span> = over-granted / denied</div>
+            <div><span style="color:var(--accent)">v*</span> = wildcard (implicit) value key</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ═══════════════════════ LIVE EVALUATE ═══════════════════════ -->
+  <div class="page" id="page-evaluate">
+    <div class="panel-grid">
+      <div class="panel">
+        <div class="panel-header"><div class="panel-title">⚡ Real-Time Access Evaluation</div></div>
+        <div class="panel-body">
+          <div class="form-group">
+            <label class="form-label">USER ID</label>
+            <input class="form-input" id="evUser" placeholder="e.g. alice" value="alice"/>
+          </div>
+          <div class="form-group">
+            <label class="form-label">RESOURCE</label>
+            <input class="form-input" id="evResource" placeholder="e.g. s3://project-bucket/secrets/key.json" value="s3://project-bucket/secrets/key.json"/>
+          </div>
+          <div class="form-group">
+            <label class="form-label">ACTION</label>
+            <select class="form-select" id="evAction">
+              <option>READ</option><option>WRITE</option><option>DELETE</option><option>LIST</option>
+            </select>
+          </div>
+          <button class="btn btn-primary" style="width:100%" onclick="runEvaluate()">⚡ Evaluate Request</button>
+
+          <div class="result-box" id="evalResult">
+            <div class="result-label">VERDICT</div>
+            <div class="result-value" id="evalVerdict">—</div>
+            <div class="result-detail" id="evalDetail">—</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="panel">
+        <div class="panel-header"><div class="panel-title">📜 Evaluation History</div></div>
+        <div class="panel-body" style="padding:0">
+          <div id="evalHistory" style="max-height:400px;overflow-y:auto"></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Quick test buttons -->
+    <div class="panel">
+      <div class="panel-header"><div class="panel-title">🧪 Quick Tests</div></div>
+      <div class="panel-body" style="display:flex;flex-wrap:wrap;gap:10px">
+        <button class="btn btn-success" onclick="quickTest('alice','s3://project-bucket/docs/report1.pdf','READ')">✓ Alice reads docs</button>
+        <button class="btn btn-danger" onclick="quickTest('alice','s3://project-bucket/secrets/key.json','READ')">✗ Alice reads secrets</button>
+        <button class="btn btn-success" onclick="quickTest('bob','s3://project-bucket/uploads/data.csv','WRITE')">✓ Bob uploads data</button>
+        <button class="btn btn-danger" onclick="quickTest('carol','s3://project-bucket/private/cfg.yaml','WRITE')">✗ Carol writes private</button>
+        <button class="btn btn-danger" onclick="quickTest('dave','s3://project-bucket/billing/invoices.pdf','READ')">✗ Dave reads billing</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ═══════════════════════ ML ANOMALY ═══════════════════════ -->
+  <div class="page" id="page-anomaly">
+    <div class="panel" style="margin-bottom:16px">
+      <div class="panel-header">
+        <div class="panel-title">🤖 Machine Learning Anomaly Detection</div>
+        <button class="btn btn-primary" onclick="runMLAnalysis()">▶ Run Analysis</button>
+      </div>
+      <div class="panel-body">
+        <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:16px" id="mlStats">
+          <div style="background:var(--surface);border:1px solid var(--border);border-radius:8px;padding:12px;text-align:center">
+            <div style="font-size:9px;color:var(--muted);font-family:var(--font-mono);margin-bottom:4px">TOTAL ANALYZED</div>
+            <div style="font-size:24px;font-weight:800;color:var(--accent)" id="mlTotal">—</div>
+          </div>
+          <div style="background:var(--surface);border:1px solid var(--border);border-radius:8px;padding:12px;text-align:center">
+            <div style="font-size:9px;color:var(--muted);font-family:var(--font-mono);margin-bottom:4px">FLAGGED</div>
+            <div style="font-size:24px;font-weight:800;color:var(--danger)" id="mlFlagged">—</div>
+          </div>
+          <div style="background:var(--surface);border:1px solid var(--border);border-radius:8px;padding:12px;text-align:center">
+            <div style="font-size:9px;color:var(--muted);font-family:var(--font-mono);margin-bottom:4px">DETECTION RATE</div>
+            <div style="font-size:24px;font-weight:800;color:var(--ok)" id="mlRate">—</div>
+          </div>
+          <div style="background:var(--surface);border:1px solid var(--border);border-radius:8px;padding:12px;text-align:center">
+            <div style="font-size:9px;color:var(--muted);font-family:var(--font-mono);margin-bottom:4px">MODEL</div>
+            <div style="font-size:13px;font-weight:800;color:var(--accent3)" id="mlModel">Isolation Forest</div>
+          </div>
+        </div>
+
+        <div class="table-wrap">
+          <table>
+            <thead>
+              <tr><th>NAME</th><th>ANOMALY SCORE</th><th>RISK</th><th>ISSUE</th><th>STATUS</th><th>ACTION</th></tr>
+            </thead>
+            <tbody id="mlTable"><tr><td colspan="6" class="empty">Run analysis to see results</td></tr></tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ═══════════════════════ IAM ═══════════════════════ -->
+  <div class="page" id="page-iam">
+    <div class="panel">
+      <div class="panel-header">
+        <div class="panel-title">🔑 IAM Policy Scanner</div>
+        <button class="btn btn-primary" onclick="loadIAM()">🔍 Scan Policies</button>
+      </div>
+      <div class="panel-body" style="padding:0">
+        <div class="table-wrap">
+          <table>
+            <thead><tr><th>ID</th><th>ROLE</th><th>POLICY</th><th>RESOURCE</th><th>RISK</th><th>ISSUE</th><th>REMEDIATION</th><th>ACTION</th></tr></thead>
+            <tbody id="iamTable"><tr><td colspan="8" class="empty">Run scan to see results</td></tr></tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ═══════════════════════ NETWORK ═══════════════════════ -->
+  <div class="page" id="page-network">
+    <div class="panel">
+      <div class="panel-header">
+        <div class="panel-title">🌐 Network Security Group Scanner</div>
+        <button class="btn btn-primary" onclick="loadNetwork()">🔍 Scan Rules</button>
+      </div>
+      <div class="panel-body" style="padding:0">
+        <div class="table-wrap">
+          <table>
+            <thead><tr><th>ID</th><th>NAME</th><th>PORT</th><th>CIDR</th><th>RISK</th><th>ISSUE</th><th>REMEDIATION</th><th>ACTION</th></tr></thead>
+            <tbody id="netTable"><tr><td colspan="8" class="empty">Run scan to see results</td></tr></tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ═══════════════════════ K8S ═══════════════════════ -->
+  <div class="page" id="page-k8s">
+    <div class="panel">
+      <div class="panel-header">
+        <div class="panel-title">☸ Kubernetes Configuration Scanner</div>
+        <button class="btn btn-primary" onclick="loadK8s()">🔍 Scan Configs</button>
+      </div>
+      <div class="panel-body" style="padding:0">
+        <div class="table-wrap">
+          <table>
+            <thead><tr><th>ID</th><th>DEPLOYMENT</th><th>PRIVILEGED</th><th>HOST NET</th><th>READ ONLY</th><th>RISK</th><th>ISSUE</th><th>ACTION</th></tr></thead>
+            <tbody id="k8sTable"><tr><td colspan="8" class="empty">Run scan to see results</td></tr></tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ═══════════════════════ LOGS ═══════════════════════ -->
+  <div class="page" id="page-logs">
+    <div class="panel">
+      <div class="panel-header">
+        <div class="panel-title">📋 Access Log Analysis</div>
+        <button class="btn btn-primary" onclick="loadLogs()">⟳ Load Logs</button>
+      </div>
+      <div class="panel-body" style="padding:0">
+        <div class="table-wrap">
+          <table>
+            <thead><tr><th>TIMESTAMP</th><th>USER</th><th>ACTION</th><th>RESOURCE</th><th>DECISION</th><th>OPMonitor VERDICT</th></tr></thead>
+            <tbody id="logTable"><tr><td colspan="6" class="empty">Load logs to see results</td></tr></tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ═══════════════════════ BASELINE ═══════════════════════ -->
+  <div class="page" id="page-baseline">
+    <div class="panel-grid">
+      <div class="panel">
+        <div class="panel-header">
+          <div class="panel-title">📐 Inferred Baseline Rules</div>
+          <button class="btn btn-primary" onclick="loadBaseline()">↻ Recompute</button>
+        </div>
+        <div class="panel-body" id="baselineRules">
+          <div class="empty"><div class="empty-icon">📐</div><div class="empty-text">Click Recompute to load baseline</div></div>
+        </div>
+      </div>
+      <div class="panel">
+        <div class="panel-header"><div class="panel-title">ℹ OPMonitor Algorithm</div></div>
+        <div class="panel-body">
+          <div style="font-size:12px;line-height:1.9;color:var(--muted)">
+            <div style="font-weight:700;color:var(--text);margin-bottom:8px">Two-Phase Baseline Inference</div>
+            <div style="margin-bottom:10px"><span style="color:var(--accent)">Phase 1 — Coarse Mining</span><br>Groups logs by (userId, action). Finds longest common resource prefix. Emits broad wildcard rules. Uses ROI-Greedy submodular optimization.</div>
+            <div style="margin-bottom:10px"><span style="color:var(--ok)">Phase 2 — Rule Refinement</span><br>Examines each wildcard rule. Detects sub-directory structure. Splits over-broad wildcards into tighter per-subdirectory rules. Eliminates unseen access paths.</div>
+            <div style="margin-bottom:10px"><span style="color:var(--accent2)">ABT Structure</span><br>Encodes refined rules into Abstract Baseline Tree for O(depth) lookup. Supports positive, negative, and wildcard conditions.</div>
+            <div style="background:var(--surface);border:1px solid var(--border);border-radius:6px;padding:10px;font-family:var(--font-mono);font-size:10px;margin-top:8px">
+              <div style="color:var(--accent)">Detection Rate: 99.23%</div>
+              <div style="color:var(--ok)">Avg Inference: 3.67s</div>
+              <div style="color:var(--accent3)">ABT Eval: 3.98 μs</div>
+              <div style="color:var(--accent2)">Approximation Gap: &lt;5%</div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  </div><!-- /content -->
+</div><!-- /main -->
+
+<!-- TOAST CONTAINER -->
+<div class="toast-container" id="toastContainer"></div>
+
+<script>
+const API = 'http://localhost:5000/api';
+let evalHistory = [];
+
+// ─── Navigation ───────────────────────────────────────
+function showPage(id) {
+  document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+  document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+  document.getElementById('page-' + id).classList.add('active');
+  event && event.currentTarget && event.currentTarget.classList.add('active');
+  // Fix nav highlight
+  document.querySelectorAll('.nav-item').forEach(n => {
+    if(n.getAttribute('onclick') && n.getAttribute('onclick').includes("'"+id+"'")) n.classList.add('active');
+  });
+  const titles = {
+    dashboard:'📊 Dashboard', opmonitor:'🔍 OPMonitor Baseline', evaluate:'⚡ Live Evaluate',
+    anomaly:'🤖 ML Anomaly Detection', iam:'🔑 IAM Policies', network:'🌐 Network Rules',
+    k8s:'☸ Kubernetes', logs:'📋 Access Logs', baseline:'📐 Baseline Rules'
+  };
+  const subs = {dashboard:'OVERVIEW',opmonitor:'CORE ALGORITHM',evaluate:'REAL-TIME',
+    anomaly:'ISOLATION FOREST',iam:'AWS IAM',network:'SECURITY GROUPS',k8s:'CONTAINER SECURITY',
+    logs:'AUDIT TRAIL',baseline:'INFERENCE RESULTS'};
+  document.getElementById('pageTitle').innerHTML = `${titles[id]||id} <span>${subs[id]||''}</span>`;
+}
+
+// ─── Toast ─────────────────────────────────────────────
+function toast(type, title, msg) {
+  const icons = {danger:'🚨', success:'✅', warn:'⚠️'};
+  const el = document.createElement('div');
+  el.className = `toast ${type}`;
+  el.innerHTML = `<div class="toast-icon">${icons[type]||'ℹ'}</div><div><div class="toast-title">${title}</div><div class="toast-msg">${msg}</div></div>`;
+  document.getElementById('toastContainer').prepend(el);
+  setTimeout(() => el.remove(), 4000);
+}
+
+// ─── Fetch helper ──────────────────────────────────────
+async function api(path, method='GET', body=null) {
+  const opts = { method, headers: {'Content-Type':'application/json'} };
+  if(body) opts.body = JSON.stringify(body);
+  try {
+    const r = await fetch(API + path, opts);
+    return await r.json();
+  } catch(e) {
+    toast('danger', 'API Error', e.message);
+    return null;
+  }
+}
+
+// ─── Risk badge ────────────────────────────────────────
+function riskBadge(r) {
+  return `<span class="badge-risk badge-${r||'low'}">${(r||'low').toUpperCase()}</span>`;
+}
+function verdictBadge(v) {
+  if(v==='over-granted') return `<span class="badge-risk badge-over">OVER-GRANTED</span>`;
+  if(v==='allowed') return `<span class="badge-risk badge-allowed">ALLOWED</span>`;
+  return `<span class="badge-risk badge-normal">${(v||'').toUpperCase()}</span>`;
+}
+function boolBadge(b) {
+  return b ? `<span class="badge-risk badge-critical">YES</span>` : `<span class="badge-risk badge-low">NO</span>`;
+}
+
+// ─── Dashboard ─────────────────────────────────────────
+async function loadDashboard() {
+  const d = await api('/dashboard/summary');
+  if(!d) return;
+  document.getElementById('s-rules').textContent = d.baseline_rules;
+  document.getElementById('s-og').textContent = d.over_granted;
+  document.getElementById('s-dr').textContent = d.detection_rate + '%';
+  document.getElementById('s-lat').textContent = d.abt_eval_us + ' μs';
+
+  // Badges
+  document.getElementById('iamBadge').textContent = d.iam_issues;
+  document.getElementById('netBadge').textContent = d.network_issues;
+  document.getElementById('k8sBadge').textContent = d.k8s_issues;
+
+  drawTrend(d.trend);
+  drawDonut(d.risk_distribution);
+
+  // IAM bar
+  const rd = d.risk_distribution;
+  const total = rd.critical + rd.high + rd.medium + rd.low;
+  document.getElementById('iamBar').innerHTML = barChart([
+    {label:'CRITICAL', count:rd.critical, color:'var(--danger)', pct: rd.critical/total*100},
+    {label:'HIGH',     count:rd.high,     color:'var(--warn)',   pct: rd.high/total*100},
+    {label:'MEDIUM',   count:rd.medium,   color:'var(--accent3)',pct: rd.medium/total*100},
+    {label:'LOW',      count:rd.low,      color:'var(--ok)',     pct: rd.low/total*100},
+  ]);
+  document.getElementById('netBar').innerHTML = barChart([
+    {label:'OPEN PORT', count:1, color:'var(--danger)', pct:25},
+    {label:'DB EXPOSED',count:1, color:'var(--warn)',   pct:25},
+    {label:'SSH OPEN',  count:1, color:'var(--warn)',   pct:25},
+    {label:'HTTPS',     count:1, color:'var(--ok)',     pct:25},
+  ]);
+  document.getElementById('k8sBar').innerHTML = barChart([
+    {label:'PRIV+HOST', count:1, color:'var(--danger)', pct:25},
+    {label:'PRIV',      count:1, color:'var(--warn)',   pct:25},
+    {label:'HOST NET',  count:1, color:'var(--accent3)',pct:25},
+    {label:'SECURE',    count:1, color:'var(--ok)',     pct:25},
+  ]);
+
+  document.getElementById('recentAlerts').innerHTML = `
+    <div style="display:flex;flex-direction:column;gap:8px">
+      <div style="display:flex;align-items:center;gap:12px;padding:10px 12px;background:rgba(239,68,68,.05);border:1px solid rgba(239,68,68,.15);border-radius:8px">
+        <span>🚨</span><div><div style="font-size:12px;font-weight:700">Over-Grant: alice → s3://project-bucket/secrets/api_keys.json</div><div style="font-size:10px;color:var(--muted);font-family:var(--font-mono)">2025-01-14 10:00:00 · READ · CRITICAL</div></div>${riskBadge('critical')}
+      </div>
+      <div style="display:flex;align-items:center;gap:12px;padding:10px 12px;background:rgba(245,158,11,.05);border:1px solid rgba(245,158,11,.15);border-radius:8px">
+        <span>⚠️</span><div><div style="font-size:12px;font-weight:700">IAM Wildcard: DevOpsRole has ec2:* on all resources</div><div style="font-size:10px;color:var(--muted);font-family:var(--font-mono)">2025-01-14 09:30:00 · RULE-SCAN · HIGH</div></div>${riskBadge('high')}
+      </div>
+      <div style="display:flex;align-items:center;gap:12px;padding:10px 12px;background:rgba(239,68,68,.05);border:1px solid rgba(239,68,68,.15);border-radius:8px">
+        <span>🚨</span><div><div style="font-size:12px;font-weight:700">K8s: monitor-deployment running privileged + hostNetwork</div><div style="font-size:10px;color:var(--muted);font-family:var(--font-mono)">2025-01-14 08:45:00 · K8S-SCAN · CRITICAL</div></div>${riskBadge('critical')}
+      </div>
+    </div>`;
+}
+
+function barChart(items) {
+  return items.map(i => `
+    <div class="bar-row">
+      <div class="bar-label">${i.label}</div>
+      <div class="bar-track"><div class="bar-fill" style="width:${i.pct.toFixed(0)}%;background:${i.color}"></div></div>
+      <div class="bar-count">${i.count}</div>
+    </div>`).join('');
+}
+
+function drawDonut(rd) {
+  const colors = ['#ef4444','#f59e0b','#22d3ee','#10b981'];
+  const labels = ['Critical','High','Medium','Low'];
+  const vals   = [rd.critical, rd.high, rd.medium, rd.low];
+  const total  = vals.reduce((a,b)=>a+b,0);
+  let start = -90, paths = '';
+  vals.forEach((v,i) => {
+    const angle = (v/total)*360;
+    const rad1  = (start) * Math.PI/180;
+    const rad2  = (start+angle) * Math.PI/180;
+    const x1 = 50 + 38*Math.cos(rad1), y1 = 50 + 38*Math.sin(rad1);
+    const x2 = 50 + 38*Math.cos(rad2), y2 = 50 + 38*Math.sin(rad2);
+    const large = angle > 180 ? 1 : 0;
+    if(v > 0) paths += `<path d="M50 50 L${x1} ${y1} A38 38 0 ${large} 1 ${x2} ${y2} Z" fill="${colors[i]}" opacity=".85"/>`;
+    start += angle;
+  });
+  document.getElementById('donutSvg').innerHTML = paths +
+    `<circle cx="50" cy="50" r="22" fill="var(--card)"/>
+     <text x="50" y="54" text-anchor="middle" font-size="11" font-weight="800" fill="var(--text)">${total}</text>`;
+  document.getElementById('donutLegend').innerHTML = labels.map((l,i) =>
+    `<div class="legend-item"><div class="legend-dot" style="background:${colors[i]}"></div>${l}: <b style="color:${colors[i]}">${vals[i]}</b></div>`
+  ).join('');
+}
+
+function drawTrend(trend) {
+  const svg = document.getElementById('trendSvg');
+  const W = svg.parentElement.offsetWidth || 400, H = 80;
+  svg.setAttribute('viewBox', `0 0 ${W} ${H}`);
+  const maxVal = Math.max(...trend.map(t => t.over_granted));
+  const points = trend.map((t,i) => {
+    const x = (i/(trend.length-1)) * (W-40) + 20;
+    const y = H - 10 - ((t.over_granted / maxVal) * (H-20));
+    return `${x},${y}`;
+  }).join(' ');
+  const areaPoints = `20,${H} ` + points + ` ${W-20},${H}`;
+  svg.innerHTML = `
+    <defs>
+      <linearGradient id="tg" x1="0" y1="0" x2="0" y2="1">
+        <stop offset="0%" stop-color="var(--accent)" stop-opacity="0.3"/>
+        <stop offset="100%" stop-color="var(--accent)" stop-opacity="0"/>
+      </linearGradient>
+    </defs>
+    <polygon points="${areaPoints}" fill="url(#tg)"/>
+    <polyline points="${points}" fill="none" stroke="var(--accent)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+    ${trend.map((t,i)=>{
+      const x=(i/(trend.length-1))*(W-40)+20;
+      const y=H-10-((t.over_granted/maxVal)*(H-20));
+      return `<circle cx="${x}" cy="${y}" r="3" fill="var(--accent)"/>
+              <text x="${x}" y="${H}" text-anchor="middle" font-size="8" fill="var(--muted)" font-family="JetBrains Mono">${t.date.split(' ')[1]}</text>`;
+    }).join('')}`;
+}
+
+// ─── OPMonitor / Baseline Inference ───────────────────
+async function runBaselineInference() {
+  document.getElementById('opLogs').textContent = '…';
+  document.getElementById('opCoarse').textContent = '…';
+  document.getElementById('opRefined').textContent = '…';
+  document.getElementById('opTime').textContent = '…';
+  const d = await api('/baseline/infer', 'POST', {});
+  if(!d) return;
+  document.getElementById('opLogs').textContent = d.logs_processed;
+  document.getElementById('opCoarse').textContent = d.coarse_count;
+  document.getElementById('opRefined').textContent = d.refined_count;
+  document.getElementById('opTime').textContent = d.inference_time_ms + ' ms';
+
+  // Rule cards
+  document.getElementById('opRulesOut').innerHTML = '<div style="font-size:10px;color:var(--muted);font-family:var(--font-mono);margin-bottom:8px">REFINED BASELINE RULES</div>' +
+    d.refined_rules.map(r => `
+      <div class="rule-card">
+        <div class="rule-head">
+          <span class="rule-user">${r.userId}</span>
+          <span class="rule-action">${r.action}</span>
+          <span style="font-size:9px;color:var(--muted);font-family:var(--font-mono);margin-left:auto">${r.type}</span>
+        </div>
+        <div class="rule-pattern">${r.resourcePattern}</div>
+      </div>`).join('');
+
+  // ABT visualization
+  const users = [...new Set(d.refined_rules.map(r=>r.userId))];
+  document.getElementById('abtViz').innerHTML = `<div style="margin-bottom:8px;font-size:10px;color:var(--muted)">ROOT (userId)</div>` +
+    users.map(u => {
+      const userRules = d.refined_rules.filter(r=>r.userId===u);
+      return `<div class="abt-node">
+        <div class="abt-item"><span class="abt-connector">├─</span><span class="abt-label" style="color:var(--accent)">${u}</span></div>
+        ${userRules.map((r,i) => `
+          <div class="abt-node">
+            <div class="abt-item"><span class="abt-connector">${i===userRules.length-1?'└─':'├─'}</span>
+              <span class="abt-label" style="color:var(--ok)">${r.action}</span>
+              <span style="margin-left:6px;font-size:10px;color:var(--muted)">${r.resourcePattern}</span>
+              <span class="abt-leaf-t" style="margin-left:6px">TRUE</span>
+            </div>
+          </div>`).join('')}
+        <div class="abt-node">
+          <div class="abt-item"><span class="abt-connector">└─</span><span style="color:var(--accent)">v*</span><span style="margin-left:6px;font-size:10px;color:var(--muted)">(unseen resources)</span><span class="abt-leaf-f" style="margin-left:6px">FALSE</span></div>
+        </div>
+      </div>`;
+    }).join('');
+
+  toast('success','Baseline Inferred',`${d.refined_count} rules in ${d.inference_time_ms}ms`);
+}
+
+// ─── Live Evaluate ─────────────────────────────────────
+async function runEvaluate(u, res, act) {
+  const userId   = u   || document.getElementById('evUser').value.trim();
+  const resource = res || document.getElementById('evResource').value.trim();
+  const action   = act || document.getElementById('evAction').value;
+  if(!userId || !resource) { toast('warn','Missing Fields','Enter user ID and resource'); return; }
+
+  const d = await api('/evaluate', 'POST', {userId, resource, action});
+  if(!d) return;
+
+  const box = document.getElementById('evalResult');
+  box.className = 'result-box show ' + (d.verdict==='over-granted' ? 'danger' : 'success');
+  document.getElementById('evalVerdict').className = 'result-value ' + (d.verdict==='over-granted' ? 'danger' : 'success');
+  document.getElementById('evalVerdict').textContent = d.verdict.toUpperCase().replace('-',' ');
+  document.getElementById('evalDetail').textContent =
+    `User: ${d.userId}  |  Action: ${d.action}  |  Rules Checked: ${d.baseline_rules_checked}  |  ${d.timestamp}`;
+
+  if(d.verdict==='over-granted') toast('danger','Over-Grant Detected',`${userId} → ${resource.split('/').pop()}`);
+  else toast('success','Access Normal',`${userId} within baseline`);
+
+  // History
+  evalHistory.unshift(d);
+  if(evalHistory.length > 20) evalHistory.pop();
+  renderEvalHistory();
+}
+
+function quickTest(u, r, a) {
+  document.getElementById('evUser').value = u;
+  document.getElementById('evResource').value = r;
+  document.getElementById('evAction').value = a;
+  runEvaluate(u, r, a);
+}
+
+function renderEvalHistory() {
+  document.getElementById('evalHistory').innerHTML = evalHistory.map(d => `
+    <div style="display:flex;align-items:center;gap:10px;padding:10px 16px;border-bottom:1px solid var(--border);font-size:11px">
+      ${verdictBadge(d.verdict)}
+      <span class="mono" style="color:var(--muted)">${d.userId}</span>
+      <span style="color:var(--ok)">${d.action}</span>
+      <span class="mono truncate">${d.resource}</span>
+    </div>`).join('') || '<div class="empty"><div class="empty-text">No evaluations yet</div></div>';
+}
+
+// ─── ML Analysis ───────────────────────────────────────
+async function runMLAnalysis() {
+  const d = await api('/ml/analyze', 'POST', {});
+  if(!d) return;
+  document.getElementById('mlTotal').textContent = d.total;
+  document.getElementById('mlFlagged').textContent = d.flagged;
+  document.getElementById('mlRate').textContent = d.detection_rate + '%';
+  document.getElementById('mlBadge').textContent = d.flagged;
+
+  document.getElementById('mlTable').innerHTML = d.results.map(r => {
+    const scoreColor = r.anomaly_score > 0.6 ? 'var(--danger)' : r.anomaly_score > 0.3 ? 'var(--warn)' : 'var(--ok)';
+    return `<tr>
+      <td class="mono">${r.name}</td>
+      <td>
+        <div class="score-cell">
+          <div class="score-bar"><div class="score-fill" style="width:${(r.anomaly_score*100).toFixed(0)}%;background:${scoreColor}"></div></div>
+          <div class="score-num" style="color:${scoreColor}">${r.anomaly_score.toFixed(3)}</div>
+        </div>
+      </td>
+      <td>${riskBadge(r.risk)}</td>
+      <td style="font-size:11px;color:var(--muted)">${r.issue}</td>
+      <td>${r.flagged ? '<span class="badge-risk badge-critical">ANOMALY</span>' : '<span class="badge-risk badge-low">NORMAL</span>'}</td>
+      <td><button class="btn btn-success" style="padding:4px 10px;font-size:10px" onclick="remediate('${r.id}')">Fix</button></td>
+    </tr>`;
+  }).join('');
+  toast('success','ML Analysis Complete',`${d.flagged}/${d.total} anomalies detected`);
+}
+
+// ─── IAM Scan ──────────────────────────────────────────
+async function loadIAM() {
+  const d = await api('/scan/iam');
+  if(!d) return;
+  const high = d.configs.filter(c=>c.risk==='critical'||c.risk==='high').length;
+  document.getElementById('iamBadge').textContent = high;
+  document.getElementById('iamTable').innerHTML = d.configs.map(c => `<tr>
+    <td class="mono">${c.id}</td>
+    <td style="font-weight:700">${c.name}</td>
+    <td class="mono" style="color:var(--warn)">${c.policy}</td>
+    <td class="mono truncate">${c.resource}</td>
+    <td>${riskBadge(c.risk)}</td>
+    <td style="font-size:11px;max-width:200px">${c.issue}</td>
+    <td style="font-size:10px;color:var(--muted);max-width:200px">${c.remediation}</td>
+    <td><button class="btn btn-success" style="padding:4px 10px;font-size:10px" onclick="remediate('${c.id}')">Remediate</button></td>
+  </tr>`).join('');
+  toast('success','IAM Scan Complete',`${d.count} policies analyzed, ${high} high/critical`);
+}
+
+// ─── Network Scan ──────────────────────────────────────
+async function loadNetwork() {
+  const d = await api('/scan/network');
+  if(!d) return;
+  const high = d.configs.filter(c=>c.risk==='critical'||c.risk==='high').length;
+  document.getElementById('netBadge').textContent = high;
+  document.getElementById('netTable').innerHTML = d.configs.map(c => `<tr>
+    <td class="mono">${c.id}</td>
+    <td style="font-weight:700">${c.name}</td>
+    <td class="mono" style="color:var(--accent3)">${c.port}</td>
+    <td class="mono" style="color:var(--warn)">${c.cidr}</td>
+    <td>${riskBadge(c.risk)}</td>
+    <td style="font-size:11px">${c.issue}</td>
+    <td style="font-size:10px;color:var(--muted);max-width:180px">${c.remediation}</td>
+    <td><button class="btn btn-success" style="padding:4px 10px;font-size:10px" onclick="remediate('${c.id}')">Fix Rule</button></td>
+  </tr>`).join('');
+  toast('success','Network Scan Complete',`${d.count} rules analyzed`);
+}
+
+// ─── K8s Scan ──────────────────────────────────────────
+async function loadK8s() {
+  const d = await api('/scan/k8s');
+  if(!d) return;
+  const high = d.configs.filter(c=>c.risk==='critical'||c.risk==='high').length;
+  document.getElementById('k8sBadge').textContent = high;
+  document.getElementById('k8sTable').innerHTML = d.configs.map(c => `<tr>
+    <td class="mono">${c.id}</td>
+    <td style="font-weight:700">${c.name}</td>
+    <td>${boolBadge(c.privileged)}</td>
+    <td>${boolBadge(c.hostNetwork)}</td>
+    <td>${boolBadge(!c.readOnly)}</td>
+    <td>${riskBadge(c.risk)}</td>
+    <td style="font-size:11px">${c.issue}</td>
+    <td><button class="btn btn-success" style="padding:4px 10px;font-size:10px" onclick="remediate('${c.id}')">Patch</button></td>
+  </tr>`).join('');
+  toast('success','K8s Scan Complete',`${d.count} deployments analyzed`);
+}
+
+// ─── Access Logs ───────────────────────────────────────
+async function loadLogs() {
+  const d = await api('/logs');
+  if(!d) return;
+  document.getElementById('logTable').innerHTML = d.logs.map(l => `<tr>
+    <td class="mono" style="font-size:10px">${l.timestamp}</td>
+    <td style="font-weight:700;color:var(--accent)">${l.userId}</td>
+    <td class="mono" style="color:var(--ok)">${l.action}</td>
+    <td class="mono truncate">${l.resource}</td>
+    <td>${l.decision==='allow'?'<span style="color:var(--ok)">✓ allow</span>':'<span style="color:var(--danger)">✗ deny</span>'}</td>
+    <td>${verdictBadge(l.verdict)}</td>
+  </tr>`).join('');
+}
+
+// ─── Baseline Page ─────────────────────────────────────
+async function loadBaseline() {
+  const d = await api('/baseline/infer', 'POST', {});
+  if(!d) return;
+  document.getElementById('baselineRules').innerHTML =
+    `<div style="margin-bottom:12px;font-size:11px;color:var(--muted);font-family:var(--font-mono)">
+       ${d.refined_count} refined rules · Inference: ${d.inference_time_ms}ms · Logs: ${d.logs_processed}
+     </div>` +
+    d.refined_rules.map(r => `
+      <div class="rule-card">
+        <div class="rule-head">
+          <span class="rule-user">${r.userId}</span>
+          <span class="rule-action">${r.action}</span>
+          <span style="font-size:9px;color:var(--muted);font-family:var(--font-mono);margin-left:auto">${r.type}</span>
+        </div>
+        <div class="rule-pattern">${r.resourcePattern}</div>
+        <div style="font-size:9px;color:var(--muted);margin-top:4px;font-family:var(--font-mono)">
+          Covers: ${(r.resources||[]).join(', ')}
+        </div>
+      </div>`).join('');
+  toast('success','Baseline Loaded',`${d.refined_count} rules computed`);
+}
+
+// ─── Remediate ─────────────────────────────────────────
+async function remediate(id) {
+  const d = await api('/remediate', 'POST', {id, action:'auto'});
+  if(!d) return;
+  toast('success','Remediated',`${id}: ${d.message}`);
+}
+
+// ─── Full Scan ─────────────────────────────────────────
+async function runFullScan() {
+  toast('warn','Full Scan Started','Running all detection modules…');
+  await Promise.all([loadIAM(), loadNetwork(), loadK8s(), runMLAnalysis(), loadLogs()]);
+  toast('success','Full Scan Complete','All modules executed');
+}
+
+// ─── Refresh ───────────────────────────────────────────
+function refreshAll() {
+  loadDashboard();
+  toast('success','Refreshed','Dashboard data updated');
+}
+
+// ─── Init ──────────────────────────────────────────────
+loadDashboard();
+</script>
+</body>
+</html>

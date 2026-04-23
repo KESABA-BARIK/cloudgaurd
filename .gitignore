@@ -1,0 +1,356 @@
+# ============================================================================
+# GLOBAL GITIGNORE FOR CLOUD CONFIGURATION SECURITY ANALYSIS PROJECT
+# ============================================================================
+# Covers both backend (Python/Flask) and frontend (Next.js/TypeScript)
+
+# ============================================================================
+# PYTHON BACKEND (.venv, services, routes, etc.)
+# ============================================================================
+
+# Virtual environments
+.venv/
+venv/
+ENV/
+env/
+.env
+.env.local
+.env.*.local
+
+# Python bytecode
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+
+# Distribution / packaging
+.Python
+build/
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+lib64/
+parts/
+sdist/
+var/
+wheels/
+pip-wheel-metadata/
+share/python-wheels/
+*.egg-info/
+.installed.cfg
+*.egg
+MANIFEST
+
+# PyInstaller
+*.manifest
+*.spec
+
+# Unit test / coverage reports
+htmlcov/
+.tox/
+.nox/
+.coverage
+.coverage.*
+.cache
+nosetests.xml
+coverage.xml
+*.cover
+*.py,cover
+.hypothesis/
+.pytest_cache/
+
+# Flask instance folder
+instance/
+.webassets-cache
+
+# Scrapy stuff:
+.scrapy
+
+# Sphinx documentation
+docs/_build/
+
+# PyBuilder
+target/
+
+# Jupyter Notebook
+.ipynb_checkpoints
+
+# IPython
+profile_default/
+ipython_config.py
+
+# pyenv
+.python-version
+
+# Celery stuff
+celerybeat-schedule
+celerybeat.pid
+
+# SageMath parsed files
+*.sage.py
+
+# Environments
+.venv
+env.bak/
+venv.bak/
+
+# Spyder project settings
+.spyderproject
+.spyproject
+
+# Rope project settings
+.ropeproject
+
+# mkdocs documentation
+/site
+
+# mypy
+.mypy_cache/
+.dmypy.json
+dmypy.json
+
+# Pyre type checker
+.pyre/
+
+# Database files
+*.db
+*.sqlite
+*.sqlite3
+database.db
+opmonitor.db
+
+# Application logs
+*.log
+logs/
+log/
+
+# Generated test files
+test_results.txt
+test_complete_results.txt
+*.test.py
+
+# ============================================================================
+# FRONTEND (Next.js / Node.js / TypeScript) - frontend directory
+# ============================================================================
+
+# Dependencies
+frontend/node_modules/
+frontend/npm-debug.log*
+frontend/yarn-debug.log*
+frontend/yarn-error.log*
+frontend/pnpm-debug.log*
+
+# Production build
+frontend/.next/
+frontend/out/
+frontend/build/
+frontend/dist/
+
+# Development
+frontend/.env.local
+frontend/.env.development.local
+frontend/.env.test.local
+frontend/.env.production.local
+
+# IDE files
+frontend/.vscode/
+frontend/.idea/
+frontend/*.swp
+frontend/*.swo
+frontend/*~
+frontend/.DS_Store
+frontend/Thumbs.db
+
+# OS files
+frontend/.DS_Store
+frontend/Thumbs.db
+
+# Next.js specific
+frontend/.next/
+frontend/out/
+frontend/public/sw.js
+
+# Yarn
+frontend/.yarn/cache
+frontend/.yarn/unplugged
+frontend/.yarn/build-state.yml
+frontend/.yarn/install-state.gz
+
+# Testing
+frontend/coverage/
+frontend/.nyc_output/
+frontend/junit.xml
+
+# Cache files
+frontend/.eslintcache
+frontend/.stylelintcache
+
+# ============================================================================
+# EDITOR & IDE
+# ============================================================================
+
+# VS Code
+.vscode/
+.vscode/*
+!.vscode/settings.json
+!.vscode/extensions.json
+.vscode/settings.json
+.vscode/launch.json
+.vscode/tasks.json
+
+# JetBrains IDEs
+.idea/
+.idea_modules/
+*.iml
+*.iws
+*.ipr
+*.iml
+out/
+
+# Sublime Text
+*.sublime-project
+*.sublime-workspace
+
+# Vim
+*.swp
+*.swo
+*~
+.vim/
+
+# Emacs
+*~
+\#*\#
+.\#*
+
+# Atom
+.atom/
+
+# Visual Studio
+.vs/
+*.sln.docstates
+
+# ============================================================================
+# OPERATING SYSTEM
+# ============================================================================
+
+# macOS
+.DS_Store
+.AppleDouble
+.LSOverride
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+
+# Windows
+Thumbs.db
+ehthumbs.db
+Desktop.ini
+
+# Linux
+.directory
+
+# ============================================================================
+# PACKAGE MANAGERS
+# ============================================================================
+
+# NPM / Yarn / PNPM
+package-lock.json
+yarn.lock
+pnpm-lock.yaml
+
+# Pip
+requirements.txt.lock
+Pipfile.lock
+poetry.lock
+
+# ============================================================================
+# TEMPORARY / GENERATED FILES
+# ============================================================================
+
+# Temporary files
+*.tmp
+*.temp
+*.bak
+*.backup
+*.swp
+.~*
+
+# Generated files
+*.generated.py
+*.generated.ts
+*.generated.tsx
+
+# Data files
+data/
+synthetic_data/
+*.csv (except tracked CSV files)
+*.json (except config JSONs)
+
+# ============================================================================
+# PROJECT SPECIFIC
+# ============================================================================
+
+# MongoDB data
+mongodb_data/
+mongo_data/
+
+# Model files (if large)
+*.pth
+*.pt
+*.pkl
+models/large_models/
+
+# Cache
+.cache/
+cache/
+
+# Build artifacts
+dist/
+build/
+*.egg
+
+# Documentation build
+docs/_build/
+
+# ============================================================================
+# IMPORTANT: Files to always ignore
+# ============================================================================
+
+# Credentials and secrets
+*.pem
+*.key
+*.pfx
+*.p12
+.env
+.env.local
+.env.*.local
+secrets/
+credentials/
+
+# Large files
+*.iso
+*.dmg
+*.tar.gz
+*.zip
+*.rar
+
+# Git
+.git/
+.gitmodules
+
+# ============================================================================
+# EXCEPTIONS - Files to keep even if they match patterns above
+# ============================================================================
+
+# Keep these configuration files
+!.gitkeep
+!.github/
+!.github/**
+!.vscode/extensions.json
+!.editorconfig
+!.prettierrc
+!.eslintrc.json
+!.gitignore

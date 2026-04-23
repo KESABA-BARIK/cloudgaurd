@@ -1,0 +1,19 @@
+{
+  "Version": "2012-10-17",
+  "Statement": [
+    {
+      "Sid": "AllowS3FullAccess",
+      "Effect": "Allow",
+      "Principal": {"AWS": "arn:aws:iam::123456789012:user/developer"},
+      "Action": "s3:*",
+      "Resource": "*"
+    },
+    {
+      "Sid": "AllowDynamoFullAccess",
+      "Effect": "Allow",
+      "Principal": {"AWS": "arn:aws:iam::123456789012:user/developer"},
+      "Action": ["dynamodb:*", "iam:PassRole"],
+      "Resource": "*"
+    }
+  ]
+}

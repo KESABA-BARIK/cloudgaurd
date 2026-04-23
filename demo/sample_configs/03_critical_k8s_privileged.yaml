@@ -1,0 +1,28 @@
+apiVersion: v1
+kind: Pod
+metadata:
+  name: dangerous-pod
+  namespace: default
+spec:
+  hostNetwork: true
+  hostPID: true
+  containers:
+  - name: privileged-container
+    image: nginx:latest
+    securityContext:
+      privileged: true
+      runAsUser: 0
+      allowPrivilegeEscalation: true
+    volumeMounts:
+    - name: host-root
+      mountPath: /host
+    env:
+    - name: AWS_SECRET_ACCESS_KEY
+      value: "AKIAIOSFODNN7EXAMPLE"
+    - name: DATABASE_PASSWORD
+      value: "admin123"
+  volumes:
+  - name: host-root
+    hostPath:
+      path: /
+      type: Directory

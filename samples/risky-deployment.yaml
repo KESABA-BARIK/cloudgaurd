@@ -1,0 +1,43 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: risky-app
+  namespace: production
+spec:
+  replicas: 3
+  selector:
+    matchLabels:
+      app: risky-app
+  template:
+    metadata:
+      labels:
+        app: risky-app
+    spec:
+      containers:
+      - name: main-app
+        image: nginx:latest
+        securityContext:
+          privileged: true
+          runAsUser: 0
+        volumeMounts:
+        - mountPath: /host
+          name: host-fs
+      volumes:
+      - name: host-fs
+        hostPath:
+          path: /
+      - name: secret-volume
+        secret:
+          secretName: database-credentials
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: risky-service
+spec:
+  type: LoadBalancer
+  ports:
+  - port: 80
+    targetPort: 8080
+  selector:
+    app: risky-app
